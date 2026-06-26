@@ -1,0 +1,32 @@
+# .aggregitor.yml
+
+# put all your git folders here
+repos:
+  - /absolute/path/to/your/local/git/folder
+  - ../relative/path/to/another/local/git/folder
+
+output:
+  # json or md
+  format: json
+
+  # dest: stdout
+  dest: /path/to/output.md
+
+git:
+  # can watch multiple authors
+  authors:
+    - email: my-git-email@example.com
+    - name: Another Name
+
+  # run git fetch for each repo
+  fetch-remote: false
+
+  filter_unconventional: true
+  only_tags: false
+
+  # optional: filter tag pattern by regex
+  tag_paggern: "v[0-9].*"
+
+  # optional: filter branches by regex
+  branch_pattern: "^feat/"
+
