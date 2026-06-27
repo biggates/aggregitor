@@ -7,7 +7,7 @@ async function main() {
     const { initCommand } = await import("./commands/init.js");
     await initCommand();
   } else if (args[0] === "--version" || args[0] === "-V") {
-    console.log(require("../package.json").version);
+    console.log("0.1.0");
   } else if (args[0] === "--help" || args[0] === "-h") {
     console.log(`
 aggregitor - Generate aggregated git commit logs from multiple git folders

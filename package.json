@@ -6,17 +6,29 @@
     "aggregitor": "dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node18 --outfile=dist/index.js",
     "start": "node dist/index.js"
   },
-  "keywords": ["git", "log", "aggregate", "commit", "changelog"],
+  "keywords": [
+    "git",
+    "log",
+    "aggregate",
+    "commit",
+    "changelog"
+  ],
   "license": "MIT",
-  "files": ["dist/"],
+  "files": [
+    "dist/"
+  ],
   "engines": {
     "node": ">=18"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
-    "@types/node": "^22.0.0"
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.28.1",
+    "js-yaml": "^5.2.0",
+    "typescript": "^5.7.0"
   }
 }

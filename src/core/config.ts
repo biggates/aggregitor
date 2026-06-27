@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
-import { parseYaml } from "./yaml.js";
+import { load as yamlLoad } from "js-yaml";
 
 export interface Config {
   repos: string[];
@@ -67,7 +67,7 @@ export function findConfigPath(): string | null {
 
 export function loadConfig(path: string): Config {
   const raw = readFileSync(path, "utf-8");
-  const parsed = parseYaml(raw);
+  const parsed = yamlLoad(raw) as Record<string, unknown>;
 
   const repos: string[] = [];
   if (Array.isArray(parsed.repos)) {

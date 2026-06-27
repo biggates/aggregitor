@@ -136,66 +136,78 @@ function collectCommits(
   const raw = runGit(repoPath, logArgs);
   if (!raw.trim()) return [];
 
-  const blocks = raw.trim().split("\n\n");
-  if (blocks.length < 2) return [];
-
-  const entries: string[] = [];
-  for (let i = 0; i < blocks.length - 1; i += 2) {
-    entries.push(blocks[i] + "\n" + blocks[i + 1]);
-  }
-
+  const lines = raw.trim().split("\n");
   const commits: GitCommit[] = [];
   const tagHashes = new Set(tags.map((t) => t.hash));
+  let currentMeta: string | null = null;
+  let currentStatLines: string[] = [];
 
-  for (let i = 0; i < entries.length; i++) {
-    const block = entries[i];
-    const [metaLine, ...statLines] = block.split("\n");
-    if (!metaLine) continue;
-
-    const metaParts = metaLine.split("\0");
-    if (metaParts.length < 5) continue;
-
-    const hash = metaParts[0].slice(0, 7);
-    const author = metaParts[1];
-    const time = metaParts[2];
-    const message = metaParts[3];
-    const refs = metaParts[4] || "";
-
-    const branch = extractBranch(refs);
-
-    if (opts.onlyTags && !tagHashes.has(hash) && !refs.includes("tag: ")) continue;
-    if (opts.tagPattern && !tagHashes.has(hash)) {
-      const matched = tags.some((t) => new RegExp(opts.tagPattern!).test(t.name));
-      if (!matched) continue;
+  for (const line of lines) {
+    if (line.includes("\0")) {
+      if (currentMeta) {
+        processCommit(currentMeta, currentStatLines, commits, opts, tagHashes, tags);
+      }
+      currentMeta = line;
+      currentStatLines = [];
+    } else {
+      currentStatLines.push(line);
     }
-    if (opts.branchPattern && !new RegExp(opts.branchPattern).test(branch)) continue;
-    if (opts.authors && opts.authors.length > 0) {
-      const matched = opts.authors.some((a) => {
-        if (a.email && author.includes(a.email)) return true;
-        if (a.name && author.startsWith(a.name + " <")) return true;
-        return false;
-      });
-      if (!matched) continue;
-    }
-    if (opts.filterUnconventional) {
-      const conventionalRe = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?:\s/;
-      if (!conventionalRe.test(message)) continue;
-    }
-
-    let additions = 0;
-    let deletions = 0;
-    for (const s of statLines) {
-      if (!s.trim()) continue;
-      const parts = s.trim().split("\t");
-      if (parts.length < 3) continue;
-      if (parts[0] !== "-") additions += parseInt(parts[0], 10) || 0;
-      if (parts[1] !== "-") deletions += parseInt(parts[1], 10) || 0;
-    }
-
-    commits.push({ hash, author, time, message, branch, lines: { additions, deletions } });
+  }
+  if (currentMeta) {
+    processCommit(currentMeta, currentStatLines, commits, opts, tagHashes, tags);
   }
 
   return commits;
+}
+
+function processCommit(
+  metaLine: string,
+  statLines: string[],
+  commits: GitCommit[],
+  opts: FetchOptions,
+  tagHashes: Set<string>,
+  tags: GitTag[],
+) {
+  const metaParts = metaLine.split("\0");
+  if (metaParts.length < 5) return;
+
+  const hash = metaParts[0].slice(0, 7);
+  const author = metaParts[1];
+  const time = metaParts[2];
+  const message = metaParts[3];
+  const refs = metaParts[4] || "";
+  const branch = extractBranch(refs);
+
+  if (opts.onlyTags && !tagHashes.has(hash) && !refs.includes("tag: ")) return;
+  if (opts.tagPattern && !tagHashes.has(hash)) {
+    const matched = tags.some((t) => new RegExp(opts.tagPattern!).test(t.name));
+    if (!matched) return;
+  }
+  if (opts.branchPattern && !new RegExp(opts.branchPattern).test(branch)) return;
+  if (opts.authors && opts.authors.length > 0) {
+    const matched = opts.authors.some((a) => {
+      if (a.email && author.includes(a.email)) return true;
+      if (a.name && author.startsWith(a.name + " <")) return true;
+      return false;
+    });
+    if (!matched) return;
+  }
+  if (opts.filterUnconventional) {
+    const conventionalRe = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?:\s/;
+    if (!conventionalRe.test(message)) return;
+  }
+
+  let additions = 0;
+  let deletions = 0;
+  for (const s of statLines) {
+    if (!s.trim()) continue;
+    const parts = s.trim().split("\t");
+    if (parts.length < 3) continue;
+    if (parts[0] !== "-") additions += parseInt(parts[0], 10) || 0;
+    if (parts[1] !== "-") deletions += parseInt(parts[1], 10) || 0;
+  }
+
+  commits.push({ hash, author, time, message, branch, lines: { additions, deletions } });
 }
 
 function extractBranch(refs: string): string {
