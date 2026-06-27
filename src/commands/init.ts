@@ -1,4 +1,7 @@
-# .aggregitor.yml
+import { existsSync, writeFileSync } from "fs";
+import { join } from "path";
+
+const INIT_CONFIG = `# .aggregitor.yml
 # ============================================================
 # aggregitor - Generate aggregated git commit logs
 # from multiple git folders.
@@ -41,7 +44,7 @@ output:
     {{#each repos}}
     ## {{ name }}
 
-    - **Path:** `{{ path }}`
+    - **Path:** \`{{ path }}\`
     - **Total commits:** {{ total_commits }}
     - **Summary:** +{{ summary.total_additions }} / −{{ summary.total_deletions }}
     {{#if tags}}
@@ -51,7 +54,7 @@ output:
     | Tag | Hash | Date |
     |-----|------|------|
     {{#each tags}}
-    | {{ name }} | `{{ hash }}` | {{ time }} |
+    | {{ name }} | \`{{ hash }}\` | {{ time }} |
     {{/each}}
     {{/if}}
 
@@ -60,7 +63,7 @@ output:
     | Hash | Author | Time | Branch | Message | +/- |
     |------|--------|------|--------|---------|-----|
     {{#each commits}}
-    | `{{ hash }}` | {{ author }} | {{ time }} | {{ branch }} | {{ message }} | +{{ lines.additions }} −{{ lines.deletions }} |
+    | \`{{ hash }}\` | {{ author }} | {{ time }} | {{ branch }} | {{ message }} | +{{ lines.additions }} −{{ lines.deletions }} |
     {{/each}}
 
     ---
@@ -86,4 +89,14 @@ git:
 
   # Regex to filter branches.
   branch-pattern: "^feat/"
+`;
 
+export async function initCommand(): Promise<void> {
+  const target = join(process.cwd(), ".aggregitor.yml");
+  if (existsSync(target)) {
+    console.error(".aggregitor.yml already exists in this directory.");
+    process.exit(1);
+  }
+  writeFileSync(target, INIT_CONFIG, "utf-8");
+  console.log("Created .aggregitor.yml");
+}

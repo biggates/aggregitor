@@ -1,0 +1,22 @@
+{
+  "name": "aggregitor",
+  "version": "0.1.0",
+  "description": "Generate aggregated git commit logs from multiple git folders",
+  "bin": {
+    "aggregitor": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "keywords": ["git", "log", "aggregate", "commit", "changelog"],
+  "license": "MIT",
+  "files": ["dist/"],
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  }
+}

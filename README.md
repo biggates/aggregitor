@@ -1,25 +1,37 @@
 # aggregitor
 
-Generate git commit logs from multiple git folders.
+Generate aggregated git commit logs from multiple git folders.
 
 ## Usage
 
-### create configuration file
-
-will create `.aggregitor.yml` in current folder.
-
 ```
-aggregitor init
-```
+# Create .aggregitor.yml in current directory
+npx aggregitor init
 
-### run
+# Read config and output aggregated git log
+npx aggregitor
 
-will print to STDOUT.
-
-```
-aggregitor
+# Show version
+npx aggregitor --version
 ```
 
 ## Configuration
 
-see [example](./docs/.aggregitor.yml.example).
+All configuration is in `.aggregitor.yml` (single file, includes the Markdown template).
+See [example](./docs/.aggregitor.yml.example) for the full reference.
+
+### Output formats
+
+- **json** — Fixed schema output (see [example](./docs/example-output.json))
+- **md** — Template-driven Markdown (default template built-in, or customize via `output.template`)
+
+### Template syntax
+
+| Syntax | Description |
+|--------|-------------|
+| `{{ variable }}` | Interpolation |
+| `{{ variable.nested }}` | Nested property access |
+| `{{#each list}}...{{/each}}` | Loop over an array |
+| `{{#if value}}...{{/if}}` | Conditional |
+| `{{#unless value}}...{{/unless}}` | Inverse conditional |
+| `{{! comment }}` | Comment |

@@ -1,0 +1,86 @@
+{
+  "generated_at": "2026-06-27T12:00:00.000Z",
+  "begin_time": "2026-06-15T00:00:00.000Z",
+  "end_time": "2026-06-27T12:00:00.000Z",
+  "tool": {
+    "name": "aggregitor",
+    "version": "0.1.0"
+  },
+  "repos": [
+    {
+      "name": "project-alpha",
+      "path": "/home/user/projects/alpha",
+      "total_commits": 10,
+      "summary": {
+        "total_additions": 1234,
+        "total_deletions": 567
+      },
+      "tags": [
+        { "name": "v1.0.0", "hash": "a1b2c3d", "time": "2026-06-20T08:00:00+08:00" },
+        { "name": "v1.1.0", "hash": "e5f6a7b", "time": "2026-06-25T16:30:00+08:00" }
+      ],
+      "commits": [
+        { "hash": "a1b2c3d", "author": "Alice <alice@example.com>", "time": "2026-06-20T08:00:00+08:00", "message": "feat: add user authentication module", "branch": "feat/auth", "lines": { "additions": 320, "deletions": 45 } },
+        { "hash": "b2c3d4e", "author": "Bob <bob@example.com>", "time": "2026-06-20T11:15:00+08:00", "message": "fix: correct token expiration check", "branch": "feat/auth", "lines": { "additions": 12, "deletions": 8 } },
+        { "hash": "c3d4e5f", "author": "Alice <alice@example.com>", "time": "2026-06-21T09:30:00+08:00", "message": "feat: add password reset flow", "branch": "main", "lines": { "additions": 180, "deletions": 20 } },
+        { "hash": "d4e5f6a", "author": "Carol <carol@example.com>", "time": "2026-06-21T14:00:00+08:00", "message": "refactor: extract email service", "branch": "refactor/email", "lines": { "additions": 95, "deletions": 210 } },
+        { "hash": "e5f6a7b", "author": "Bob <bob@example.com>", "time": "2026-06-22T10:45:00+08:00", "message": "fix: handle empty user list edge case", "branch": "main", "lines": { "additions": 8, "deletions": 2 } },
+        { "hash": "f6a7b8c", "author": "Alice <alice@example.com>", "time": "2026-06-23T16:20:00+08:00", "message": "feat: add pagination to user list", "branch": "feat/pagination", "lines": { "additions": 210, "deletions": 30 } },
+        { "hash": "a7b8c9d", "author": "Carol <carol@example.com>", "time": "2026-06-23T17:00:00+08:00", "message": "docs: update API documentation", "branch": "main", "lines": { "additions": 45, "deletions": 12 } },
+        { "hash": "b8c9d0e", "author": "Bob <bob@example.com>", "time": "2026-06-24T08:30:00+08:00", "message": "test: add unit tests for auth module", "branch": "feat/auth", "lines": { "additions": 280, "deletions": 5 } },
+        { "hash": "c9d0e1f", "author": "Alice <alice@example.com>", "time": "2026-06-24T13:15:00+08:00", "message": "perf: optimize database queries", "branch": "main", "lines": { "additions": 56, "deletions": 180 } },
+        { "hash": "d0e1f2a", "author": "Carol <carol@example.com>", "time": "2026-06-25T16:30:00+08:00", "message": "chore: bump version to 1.1.0", "branch": "main", "lines": { "additions": 28, "deletions": 55 } }
+      ]
+    },
+    {
+      "name": "project-beta",
+      "path": "/home/user/projects/beta",
+      "total_commits": 10,
+      "summary": {
+        "total_additions": 892,
+        "total_deletions": 324
+      },
+      "tags": [
+        { "name": "v0.9.0", "hash": "e1f2a3b", "time": "2026-06-18T10:00:00+08:00" }
+      ],
+      "commits": [
+        { "hash": "e1f2a3b", "author": "Dave <dave@example.com>", "time": "2026-06-18T10:00:00+08:00", "message": "feat: initial API scaffolding", "branch": "main", "lines": { "additions": 150, "deletions": 0 } },
+        { "hash": "f2a3b4c", "author": "Eve <eve@example.com>", "time": "2026-06-18T14:30:00+08:00", "message": "feat: implement health check endpoint", "branch": "main", "lines": { "additions": 45, "deletions": 5 } },
+        { "hash": "a3b4c5d", "author": "Dave <dave@example.com>", "time": "2026-06-19T09:00:00+08:00", "message": "fix: correct CORS configuration", "branch": "fix/cors", "lines": { "additions": 18, "deletions": 10 } },
+        { "hash": "b4c5d6e", "author": "Eve <eve@example.com>", "time": "2026-06-19T16:45:00+08:00", "message": "feat: add rate limiting middleware", "branch": "main", "lines": { "additions": 120, "deletions": 30 } },
+        { "hash": "c5d6e7f", "author": "Frank <frank@example.com>", "time": "2026-06-20T11:20:00+08:00", "message": "test: add integration tests", "branch": "main", "lines": { "additions": 200, "deletions": 15 } },
+        { "hash": "d6e7f8a", "author": "Dave <dave@example.com>", "time": "2026-06-21T08:00:00+08:00", "message": "refactor: reorganize middleware stack", "branch": "main", "lines": { "additions": 35, "deletions": 120 } },
+        { "hash": "e7f8a9b", "author": "Eve <eve@example.com>", "time": "2026-06-22T13:30:00+08:00", "message": "feat: add request logging", "branch": "feat/logging", "lines": { "additions": 88, "deletions": 12 } },
+        { "hash": "f8a9b0c", "author": "Frank <frank@example.com>", "time": "2026-06-23T10:15:00+08:00", "message": "fix: handle timeout errors gracefully", "branch": "main", "lines": { "additions": 22, "deletions": 8 } },
+        { "hash": "a9b0c1d", "author": "Dave <dave@example.com>", "time": "2026-06-24T15:00:00+08:00", "message": "chore: add docker compose file", "branch": "main", "lines": { "additions": 60, "deletions": 3 } },
+        { "hash": "b0c1d2e", "author": "Eve <eve@example.com>", "time": "2026-06-25T09:00:00+08:00", "message": "docs: add README with setup instructions", "branch": "main", "lines": { "additions": 154, "deletions": 121 } }
+      ]
+    },
+    {
+      "name": "project-gamma",
+      "path": "/home/user/projects/gamma",
+      "total_commits": 10,
+      "summary": {
+        "total_additions": 1567,
+        "total_deletions": 890
+      },
+      "tags": [
+        { "name": "v2.0.0", "hash": "c1d2e3f", "time": "2026-06-15T12:00:00+08:00" },
+        { "name": "v2.1.0", "hash": "d2e3f4a", "time": "2026-06-22T18:00:00+08:00" },
+        { "name": "v2.1.1", "hash": "g3h4i5j", "time": "2026-06-26T10:00:00+08:00" }
+      ],
+      "commits": [
+        { "hash": "c1d2e3f", "author": "Grace <grace@example.com>", "time": "2026-06-15T12:00:00+08:00", "message": "feat: redesign dashboard layout", "branch": "main", "lines": { "additions": 450, "deletions": 300 } },
+        { "hash": "d2e3f4a", "author": "Heidi <heidi@example.com>", "time": "2026-06-16T10:30:00+08:00", "message": "fix: resolve chart rendering bug", "branch": "fix/chart", "lines": { "additions": 25, "deletions": 18 } },
+        { "hash": "e3f4a5b", "author": "Grace <grace@example.com>", "time": "2026-06-17T14:00:00+08:00", "message": "feat: add export to CSV feature", "branch": "main", "lines": { "additions": 180, "deletions": 20 } },
+        { "hash": "f4a5b6c", "author": "Ivan <ivan@example.com>", "time": "2026-06-18T09:15:00+08:00", "message": "refactor: migrate to new state management", "branch": "refactor/state", "lines": { "additions": 320, "deletions": 400 } },
+        { "hash": "a5b6c7d", "author": "Heidi <heidi@example.com>", "time": "2026-06-19T11:45:00+08:00", "message": "feat: add dark mode support", "branch": "main", "lines": { "additions": 160, "deletions": 30 } },
+        { "hash": "b6c7d8e", "author": "Grace <grace@example.com>", "time": "2026-06-20T08:30:00+08:00", "message": "fix: correct timezone display", "branch": "main", "lines": { "additions": 12, "deletions": 25 } },
+        { "hash": "c7d8e9f", "author": "Ivan <ivan@example.com>", "time": "2026-06-21T15:00:00+08:00", "message": "test: add e2e tests for dashboard", "branch": "main", "lines": { "additions": 230, "deletions": 15 } },
+        { "hash": "d8e9f0a", "author": "Heidi <heidi@example.com>", "time": "2026-06-22T18:00:00+08:00", "message": "feat: implement notification system", "branch": "feat/notifications", "lines": { "additions": 165, "deletions": 40 } },
+        { "hash": "e9f0a1b", "author": "Grace <grace@example.com>", "time": "2026-06-24T10:00:00+08:00", "message": "perf: lazy load heavy components", "branch": "main", "lines": { "additions": 20, "deletions": 35 } },
+        { "hash": "g3h4i5j", "author": "Ivan <ivan@example.com>", "time": "2026-06-26T10:00:00+08:00", "message": "fix: patch security vulnerability in deps", "branch": "main", "lines": { "additions": 5, "deletions": 7 } }
+      ]
+    }
+  ]
+}
