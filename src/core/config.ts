@@ -57,7 +57,7 @@ export const DEFAULT_TEMPLATE = [
 ].join("\n") + "\n";
 
 export function findConfigPath(): string | null {
-  const candidates = [".aggregitor.yml", ".aggregitor.yaml", "aggregitor.yml", "aggregitor.yaml"];
+  const candidates = [".aggregitor.yml", ".aggregitor.yaml"];
   for (const c of candidates) {
     const full = join(process.cwd(), c);
     if (existsSync(full)) return full;
