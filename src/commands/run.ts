@@ -1,5 +1,5 @@
 import { writeFileSync } from "fs";
-import { loadConfig, findConfigPath, DEFAULT_TEMPLATE, resolveRepos } from "../core/config.js";
+import { loadConfig, findConfigPath, DEFAULT_TEMPLATE, resolveRepos, expandRepoPaths } from "../core/config.js";
 import { collectRepoData, generateSummary } from "../core/git.js";
 import { parseTemplate, renderTemplate } from "../core/template.js";
 
@@ -33,7 +33,8 @@ export async function runCommand(opts: RunOptions = {}): Promise<void> {
   verboseLog(opts, `Configured repos (${config.repos.length}): ${config.repos.join(", ")}`);
   verboseLog(opts, `Config: format=${config.output.format}, fetchRemote=${config.git["fetch-remote"]}, filterUnconventional=${config.git["filter-unconventional"]}, onlyTags=${config.git["only-tags"]}`);
 
-  const absRepos = resolveRepos(config.repos);
+  const absRepos = expandRepoPaths(resolveRepos(config.repos));
+  verboseLog(opts, `Resolved repos (${absRepos.length}): ${absRepos.join(", ")}`);
   const reposData = [];
   const timestamps: string[] = [];
 

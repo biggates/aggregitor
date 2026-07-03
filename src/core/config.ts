@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from "fs";
+import { readFileSync, existsSync, readdirSync } from "fs";
 import { join } from "path";
 import { load as yamlLoad } from "js-yaml";
 
@@ -114,4 +114,31 @@ export function resolveRepos(repos: string[]): string[] {
     if (r.startsWith("/") || /^[A-Za-z]:\\/.test(r)) return r;
     return join(process.cwd(), r);
   });
+}
+
+/**
+ * Expand repo paths: if a path is a git directory itself, include it directly.
+ * Otherwise scan its immediate subdirectories and include all that are git repos.
+ */
+export function expandRepoPaths(absRepos: string[]): string[] {
+  const result: string[] = [];
+  for (const repoPath of absRepos) {
+    if (existsSync(join(repoPath, ".git"))) {
+      result.push(repoPath);
+    } else if (existsSync(repoPath)) {
+      try {
+        const entries = readdirSync(repoPath, { withFileTypes: true });
+        for (const entry of entries) {
+          if (!entry.isDirectory()) continue;
+          const subPath = join(repoPath, entry.name);
+          if (existsSync(join(subPath, ".git"))) {
+            result.push(subPath);
+          }
+        }
+      } catch {
+        // skip unreadable directories
+      }
+    }
+  }
+  return result;
 }
