@@ -73,6 +73,18 @@ function getRepoName(repoPath: string): string {
   return last.replace(/\.git$/, "");
 }
 
+/**
+ * Resolve refs/remotes/origin/HEAD to get the default branch name
+ * (e.g. "origin/master" -> "master"). Returns "" if resolution fails.
+ */
+function resolveRemoteHeadDefault(repoPath: string): string {
+  const raw = runGit(repoPath, ["rev-parse", "--abbrev-ref", "refs/remotes/origin/HEAD"]);
+  if (!raw.trim()) return "";
+  // Output looks like "origin/master" or "origin/main"
+  const m = raw.trim().match(/^[^/]+\/(.+)$/);
+  return m ? m[1] : raw.trim();
+}
+
 export function collectRepoData(repoPath: string, opts: FetchOptions): RepoData | null {
   if (!existsSync(join(repoPath, ".git"))) {
     if (opts.verbose) console.error(`[verbose] Skipping ${repoPath}: .git directory not found`);
@@ -84,9 +96,13 @@ export function collectRepoData(repoPath: string, opts: FetchOptions): RepoData 
     runGit(repoPath, ["fetch", "--all", "--tags", "--force"]);
   }
 
+  // Resolve remote HEAD symbolic ref once per repo, for commits where
+  // %S yields refs/remotes/origin/HEAD (the remote default branch pointer)
+  const defaultBranch = resolveRemoteHeadDefault(repoPath);
+
   const tags = collectTags(repoPath, opts);
   if (opts.verbose) console.error(`[verbose]   tags found: ${tags.length}`);
-  const commits = collectCommits(repoPath, opts, tags);
+  const commits = collectCommits(repoPath, opts, tags, defaultBranch);
   if (commits.length === 0) {
     if (opts.verbose) console.error(`[verbose]   no commits collected (filter or git log returned empty)`);
     return null;
@@ -141,11 +157,12 @@ function collectCommits(
   repoPath: string,
   opts: FetchOptions,
   tags: GitTag[],
+  defaultBranch: string,
 ): GitCommit[] {
   const logArgs = [
     "log",
     "--all",
-    "--format=%H%x00%an <%ae>%x00%aI%x00%s%x00%D",
+    "--format=%H%x00%an <%ae>%x00%aI%x00%s%x00%D%x00%S",
     "--numstat",
     "--no-merges",
     "--reverse",
@@ -168,7 +185,7 @@ function collectCommits(
     if (line.includes("\0")) {
       if (currentMeta) {
         const before = commits.length;
-        processCommit(currentMeta, currentStatLines, commits, opts, tagHashes, tags);
+        processCommit(currentMeta, currentStatLines, commits, opts, tagHashes, tags, defaultBranch);
         totalBeforeFilter++;
         if (opts.verbose && commits.length === before) {
           const parts = currentMeta.split("\0");
@@ -183,7 +200,7 @@ function collectCommits(
   }
   if (currentMeta) {
     const before = commits.length;
-    processCommit(currentMeta, currentStatLines, commits, opts, tagHashes, tags);
+    processCommit(currentMeta, currentStatLines, commits, opts, tagHashes, tags, defaultBranch);
     totalBeforeFilter++;
     if (opts.verbose && commits.length === before) {
       const parts = currentMeta.split("\0");
@@ -203,6 +220,7 @@ function processCommit(
   opts: FetchOptions,
   tagHashes: Set<string>,
   tags: GitTag[],
+  defaultBranch: string,
 ) {
   const metaParts = metaLine.split("\0");
   if (metaParts.length < 5) return;
@@ -212,7 +230,8 @@ function processCommit(
   const time = metaParts[2];
   const message = metaParts[3];
   const refs = metaParts[4] || "";
-  const branch = extractBranch(refs);
+  const source = metaParts[5] || "";  // %S: ref name by which commit was reached (git 2.21+)
+  const branch = extractBranch(refs, source, defaultBranch);
 
   if (opts.onlyTags && !tagHashes.has(hash) && !refs.includes("tag: ")) return;
   if (opts.branchPattern && !new RegExp(opts.branchPattern).test(branch)) return;
@@ -243,32 +262,42 @@ function processCommit(
 }
 
 /**
- * Extract the branch name from git ref names string (%D format).
- * Handles: HEAD -> main, origin/main, refs/heads/main, tag: v1.0, etc.
+ * Extract the branch name from git ref names (%D) and source ref (%S).
+ * %D contains refs pointing to the commit (only populated for branch tips,
+ * HEAD, tags). %S contains the ref name used to reach the commit (git 2.21+).
+ * Priority: %D HEAD -> branch > %S (stripped) > %D refs/heads > defaultBranch.
  */
-function extractBranch(refs: string): string {
-  if (!refs) return "unknown";
-
-  // Split multiple refs by ", " separator
-  const parts = refs.split(", ");
-
-  // Priority 1: HEAD -> branch (current checked-out branch)
-  for (const part of parts) {
-    const m = part.match(/^HEAD\s*->\s*(.+)$/);
-    if (m) return m[1].trim();
+function extractBranch(refs: string, source: string, defaultBranch: string): string {
+  // Priority 1: HEAD -> branch from %D (current checked-out branch)
+  if (refs) {
+    const parts = refs.split(", ");
+    for (const part of parts) {
+      const m = part.match(/^HEAD\s*->\s*(.+)$/);
+      if (m) return m[1].trim();
+    }
+    // Priority 2: refs/heads/branch or remote/branch from %D
+    for (const part of parts) {
+      if (part.startsWith("tag: ")) continue;
+      const cleaned = part.replace(/^refs\/heads\//, "");
+      const m2 = cleaned.match(/^[^/]+\/(.+)$/);
+      if (m2 && m2[1] !== "HEAD") return m2[1];
+      if (!cleaned.includes("/") && cleaned !== "HEAD") return cleaned;
+    }
   }
 
-  // Priority 2: refs/heads/branch or origin/branch or other remote/branch
-  for (const part of parts) {
-    if (part.startsWith("tag: ")) continue;
-    // Strip refs/heads/ prefix
-    const cleaned = part.replace(/^refs\/heads\//, "");
-    // Strip remote prefix (origin/, upstream/, etc.)
-    const m2 = cleaned.match(/^[^/]+\/(.+)$/);
-    if (m2) return m2[1];
-    // If no slash, it might be a bare branch name
-    if (!cleaned.includes("/")) return cleaned;
+  // Priority 3: fallback to %S (works for all commits when using --all)
+  if (source) {
+    // Strip refs/heads/ or refs/remotes/<remote>/ prefix
+    const cleaned = source
+      .replace(/^refs\/heads\//, "")
+      .replace(/^refs\/remotes\/[^/]+\//, "");
+    // Skip bare HEAD refs (remote default branch pointers) - use resolved default branch
+    if (cleaned === "HEAD") return defaultBranch || "unknown";
+    if (cleaned && cleaned !== source) return cleaned;
   }
+
+  // Priority 4: use default branch resolved from remote HEAD
+  if (defaultBranch) return defaultBranch;
 
   return "unknown";
 }
