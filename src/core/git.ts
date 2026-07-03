@@ -50,6 +50,7 @@ interface FetchOptions {
   onlyTags?: boolean;
   tagPattern?: string;
   branchPattern?: string;
+  verbose?: boolean;
 }
 
 function runGit(repoPath: string, args: string[]): string {
@@ -73,15 +74,24 @@ function getRepoName(repoPath: string): string {
 }
 
 export function collectRepoData(repoPath: string, opts: FetchOptions): RepoData | null {
-  if (!existsSync(join(repoPath, ".git"))) return null;
+  if (!existsSync(join(repoPath, ".git"))) {
+    if (opts.verbose) console.error(`[verbose] Skipping ${repoPath}: .git directory not found`);
+    return null;
+  }
 
   if (opts.fetchRemote) {
+    if (opts.verbose) console.error(`[verbose] Fetching remote for ${repoPath}`);
     runGit(repoPath, ["fetch", "--all", "--tags", "--force"]);
   }
 
-  const tags = collectTags(repoPath);
+  const tags = collectTags(repoPath, opts);
+  if (opts.verbose) console.error(`[verbose]   tags found: ${tags.length}`);
   const commits = collectCommits(repoPath, opts, tags);
-  if (commits.length === 0) return null;
+  if (commits.length === 0) {
+    if (opts.verbose) console.error(`[verbose]   no commits collected (filter or git log returned empty)`);
+    return null;
+  }
+  if (opts.verbose) console.error(`[verbose]   commits collected: ${commits.length} (after filtering)`);
 
   let totalAdd = 0;
   let totalDel = 0;
@@ -100,7 +110,7 @@ export function collectRepoData(repoPath: string, opts: FetchOptions): RepoData 
   };
 }
 
-function collectTags(repoPath: string): GitTag[] {
+function collectTags(repoPath: string, opts: FetchOptions): GitTag[] {
   const raw = runGit(repoPath, [
     "tag",
     "--sort=-creatordate",
@@ -108,7 +118,7 @@ function collectTags(repoPath: string): GitTag[] {
   ]);
   if (!raw.trim()) return [];
 
-  return raw
+  let tags = raw
     .trim()
     .split("\n")
     .map((line) => {
@@ -117,6 +127,14 @@ function collectTags(repoPath: string): GitTag[] {
       return { name: parts[0], hash: parts[1], time: parts[2] };
     })
     .filter((t): t is GitTag => t !== null);
+
+  // Apply tag-pattern filter at the tag level
+  if (opts.tagPattern) {
+    const re = new RegExp(opts.tagPattern);
+    tags = tags.filter((t) => re.test(t.name));
+  }
+
+  return tags;
 }
 
 function collectCommits(
@@ -134,18 +152,28 @@ function collectCommits(
   ];
 
   const raw = runGit(repoPath, logArgs);
-  if (!raw.trim()) return [];
+  if (!raw.trim()) {
+    if (opts.verbose) console.error(`[verbose]   git log returned empty output`);
+    return [];
+  }
 
   const lines = raw.trim().split("\n");
   const commits: GitCommit[] = [];
   const tagHashes = new Set(tags.map((t) => t.hash));
   let currentMeta: string | null = null;
   let currentStatLines: string[] = [];
+  let totalBeforeFilter = 0;
 
   for (const line of lines) {
     if (line.includes("\0")) {
       if (currentMeta) {
+        const before = commits.length;
         processCommit(currentMeta, currentStatLines, commits, opts, tagHashes, tags);
+        totalBeforeFilter++;
+        if (opts.verbose && commits.length === before) {
+          const parts = currentMeta.split("\0");
+          console.error(`[verbose]   filtered out commit: ${parts[0]?.slice(0, 7) || "?"} "${parts[3] || "?"}"`);
+        }
       }
       currentMeta = line;
       currentStatLines = [];
@@ -154,8 +182,16 @@ function collectCommits(
     }
   }
   if (currentMeta) {
+    const before = commits.length;
     processCommit(currentMeta, currentStatLines, commits, opts, tagHashes, tags);
+    totalBeforeFilter++;
+    if (opts.verbose && commits.length === before) {
+      const parts = currentMeta.split("\0");
+      console.error(`[verbose]   filtered out commit: ${parts[0]?.slice(0, 7) || "?"} "${parts[3] || "?"}"`);
+    }
   }
+
+  if (opts.verbose) console.error(`[verbose]   commits before filter: ${totalBeforeFilter}, after filter: ${commits.length}`);
 
   return commits;
 }
@@ -179,10 +215,6 @@ function processCommit(
   const branch = extractBranch(refs);
 
   if (opts.onlyTags && !tagHashes.has(hash) && !refs.includes("tag: ")) return;
-  if (opts.tagPattern && !tagHashes.has(hash)) {
-    const matched = tags.some((t) => new RegExp(opts.tagPattern!).test(t.name));
-    if (!matched) return;
-  }
   if (opts.branchPattern && !new RegExp(opts.branchPattern).test(branch)) return;
   if (opts.authors && opts.authors.length > 0) {
     const matched = opts.authors.some((a) => {
@@ -210,10 +242,35 @@ function processCommit(
   commits.push({ hash, author, time, message, branch, lines: { additions, deletions } });
 }
 
+/**
+ * Extract the branch name from git ref names string (%D format).
+ * Handles: HEAD -> main, origin/main, refs/heads/main, tag: v1.0, etc.
+ */
 function extractBranch(refs: string): string {
   if (!refs) return "unknown";
-  const m = refs.match(/HEAD -> ([^\s,]+)/);
-  return m ? m[1] : "unknown";
+
+  // Split multiple refs by ", " separator
+  const parts = refs.split(", ");
+
+  // Priority 1: HEAD -> branch (current checked-out branch)
+  for (const part of parts) {
+    const m = part.match(/^HEAD\s*->\s*(.+)$/);
+    if (m) return m[1].trim();
+  }
+
+  // Priority 2: refs/heads/branch or origin/branch or other remote/branch
+  for (const part of parts) {
+    if (part.startsWith("tag: ")) continue;
+    // Strip refs/heads/ prefix
+    const cleaned = part.replace(/^refs\/heads\//, "");
+    // Strip remote prefix (origin/, upstream/, etc.)
+    const m2 = cleaned.match(/^[^/]+\/(.+)$/);
+    if (m2) return m2[1];
+    // If no slash, it might be a bare branch name
+    if (!cleaned.includes("/")) return cleaned;
+  }
+
+  return "unknown";
 }
 
 export function generateSummary(

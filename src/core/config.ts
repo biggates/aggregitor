@@ -100,7 +100,7 @@ export function loadConfig(path: string): Config {
   const git = {
     authors,
     "fetch-remote": Boolean(gitRaw["fetch-remote"]),
-    "filter-unconventional": gitRaw["filter-unconventional"] !== false,
+    "filter-unconventional": gitRaw["filter-unconventional"] === true,
     "only-tags": Boolean(gitRaw["only-tags"]),
     "tag-pattern": typeof gitRaw["tag-pattern"] === "string" ? gitRaw["tag-pattern"] : undefined,
     "branch-pattern": typeof gitRaw["branch-pattern"] === "string" ? gitRaw["branch-pattern"] : undefined,
