@@ -7,6 +7,8 @@ const VERSION = "0.1.0";
 
 export interface RunOptions {
   verbose?: boolean;
+  since?: string;
+  until?: string;
 }
 
 function verboseLog(opts: RunOptions, msg: string): void {
@@ -48,6 +50,8 @@ export async function runCommand(opts: RunOptions = {}): Promise<void> {
       tagPattern: config.git["tag-pattern"],
       branchPattern: config.git["branch-pattern"],
       verbose: opts.verbose,
+      since: opts.since,
+      until: opts.until,
     });
     if (data) {
       verboseLog(opts, `  -> ${data.commits.length} commits, ${data.tags.length} tags collected`);

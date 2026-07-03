@@ -50,6 +50,8 @@ interface FetchOptions {
   onlyTags?: boolean;
   tagPattern?: string;
   branchPattern?: string;
+  since?: string;
+  until?: string;
   verbose?: boolean;
 }
 
@@ -164,6 +166,8 @@ function collectCommits(
     "--all",
     "--format=%H%x00%an <%ae>%x00%aI%x00%s%x00%D%x00%S",
     "--numstat",
+    ...(opts.since ? [`--since=${opts.since}`] : []),
+    ...(opts.until ? [`--until=${opts.until}`] : []),
     "--no-merges",
     "--reverse",
   ];
@@ -247,6 +251,10 @@ function processCommit(
     const conventionalRe = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?:\s/;
     if (!conventionalRe.test(message)) return;
   }
+
+  // Safety-net date range filtering (ISO 8601 string comparison)
+  if (opts.since && time < opts.since) return;
+  if (opts.until && time > opts.until) return;
 
   let additions = 0;
   let deletions = 0;
