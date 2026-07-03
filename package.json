@@ -18,6 +18,17 @@
     "changelog"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/biggates/aggregitor.git"
+  },
+  "homepage": "https://github.com/biggates/aggregitor#readme",
+  "bugs": {
+    "url": "https://github.com/biggates/aggregitor/issues"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
   "files": [
     "dist/"
   ],
