@@ -27,19 +27,19 @@ export function parseTemplate(tpl: string): Node[] {
 
     if (directive === "#each") {
       const bodyEnd = findBlockEnd(tpl, lastIdx, "#each", "/each");
-      const bodyStr = tpl.slice(lastIdx, bodyEnd);
+      const bodyStr = trimBlockBody(tpl, lastIdx, bodyEnd);
       lastIdx = bodyEnd + "{{/each}}".length;
       re.lastIndex = lastIdx;
       nodes.push({ type: "each", path, body: parseTemplate(bodyStr) });
     } else if (directive === "#if") {
       const bodyEnd = findBlockEnd(tpl, lastIdx, "#if", "/if");
-      const bodyStr = tpl.slice(lastIdx, bodyEnd);
+      const bodyStr = trimBlockBody(tpl, lastIdx, bodyEnd);
       lastIdx = bodyEnd + "{{/if}}".length;
       re.lastIndex = lastIdx;
       nodes.push({ type: "if", path, body: parseTemplate(bodyStr) });
     } else if (directive === "#unless") {
       const bodyEnd = findBlockEnd(tpl, lastIdx, "#unless", "/unless");
-      const bodyStr = tpl.slice(lastIdx, bodyEnd);
+      const bodyStr = trimBlockBody(tpl, lastIdx, bodyEnd);
       lastIdx = bodyEnd + "{{/unless}}".length;
       re.lastIndex = lastIdx;
       nodes.push({ type: "unless", path, body: parseTemplate(bodyStr) });
@@ -89,6 +89,25 @@ function findBlockEnd(tpl: string, start: number, openTag: string, closeTag: str
   }
 
   return idx;
+}
+
+/**
+ * Trim only the leading newline immediately after an opening block tag.
+ * The trailing newline before the closing tag is preserved as it provides
+ * the line separator between repeated block iterations (e.g. table rows).
+ * This follows Handlebars convention.
+ */
+function trimBlockBody(tpl: string, bodyStart: number, bodyEnd: number): string {
+  let start = bodyStart;
+
+  // Skip leading \n or \r\n right after the opening tag
+  if (start < bodyEnd && tpl[start] === "\n") {
+    start++;
+  } else if (start + 1 < bodyEnd && tpl[start] === "\r" && tpl[start + 1] === "\n") {
+    start += 2;
+  }
+
+  return tpl.slice(start, bodyEnd);
 }
 
 function escapeRegex(s: string): string {
