@@ -4,6 +4,23 @@ Generate aggregated git commit logs from multiple git folders.
 
 [中文文档](./README_CN.md)
 
+## What is this
+
+### Requirements
+
+- `git` must be installed locally and available in PATH
+- The required git permissions have been configured
+
+### Main use cases
+
+- Scenarios such as daily / weekly reports that require summarizing the main work from multiple git repositories over a period of time
+- Especially suitable for **scheduled tasks of an AI Agent**: configure once and it periodically produces summary reports automatically, without checking `git log` one by one; feeding only the condensed summary to the LLM instead of all raw logs **can significantly save tokens**
+
+### Limitations
+
+- The report is **summarized from git commit messages** and does not perform semantic understanding of the contents
+- Therefore, if commit messages are not detailed enough, the report quality will suffer greatly — it is recommended to use well-formed commit messages (e.g. [Conventional Commits](https://www.conventionalcommits.org/), with `git.filter-unconventional` to filter out non-conforming commits)
+
 ## Usage
 
 ```
